@@ -2,7 +2,7 @@ const WebSocket = require('ws');
 const net = require('net');
 
 // 🔴 CHANGE THESE TO YOUR FALIXNODES SERVER DETAILS
-const FALIX_IP = 'ifkfhy.falixsrv.me'; 
+const FALIX_IP = '162.55.100.208'; 
 const FALIX_PORT = 25536;                  
 
 // The cloud hosting platform will automatically inject the web port here
