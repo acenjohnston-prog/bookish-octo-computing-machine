@@ -1,24 +1,61 @@
 const WebSocket = require('ws');
 const net = require('net');
 
-const FALIX_IP = 'ifkfhy.falixsrv.me'; // Your Falix Server IP
-const FALIX_PORT = 25536;                  // Your Falix Port
-const PORT = process.env.PORT || 8080;     // Cloud provider's web port
+// 🔴 CHANGE THESE TO YOUR FALIXNODES SERVER DETAILS
+const FALIX_IP = 'ifkfhy.falixsrv.me'; 
+const FALIX_PORT = 25536;                  
 
-const wss = new WebSocket.Server({ port: PORT });
+// The cloud hosting platform will automatically inject the web port here
+const PORT = process.env.PORT || 8080;     
+
+const wss = new WebSocket.Server({ port: PORT }, () => {
+    console.log(`🚀 Eaglercraft Cloud Bridge running on web port ${PORT}`);
+    console.log(`🔗 Target Minecraft Server: ${FALIX_IP}:${FALIX_PORT}`);
+});
 
 wss.on('connection', (ws) => {
-    // Open a direct TCP socket to your Falix server
+    console.log('🔌 New player connecting from web client...');
+    
+    // Open a direct TCP pipe to your Falix server
     const tcpClient = new net.Socket();
     
     tcpClient.connect(FALIX_PORT, FALIX_IP, () => {
-        // Direct stream piping
-        ws.on('message', (message) => tcpClient.write(message));
-        tcpClient.on('data', (data) => ws.send(data));
+        console.log('✅ Connected to FalixNodes backend. Piping data stream...');
+        
+        // Pipe browser WebSocket data straight to Falix TCP
+        ws.on('message', (message) => {
+            if (tcpClient.writable) {
+                tcpClient.write(message);
+            }
+        });
+
+        // Pipe Falix TCP data straight back to browser WebSocket
+        tcpClient.on('data', (data) => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(data);
+            }
+        });
     });
 
-    ws.on('close', () => tcpClient.end());
-    tcpClient.on('close', () => ws.close());
-    tcpClient.on('error', () => ws.close());
-    ws.on('error', () => tcpClient.end());
+    // Handle disconnections and stream cleanups
+    ws.on('close', () => {
+        console.log('❌ Web client disconnected.');
+        tcpClient.end();
+    });
+    
+    tcpClient.on('close', () => {
+        console.log('❌ Falix server closed connection.');
+        ws.close();
+    });
+
+    // Error handling to prevent the cloud server from crashing
+    ws.on('error', (err) => {
+        console.error('WebSocket Error:', err.message);
+        tcpClient.end();
+    });
+    
+    tcpClient.on('error', (err) => {
+        console.error('Falix TCP Error:', err.message);
+        ws.close();
+    });
 });
