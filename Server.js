@@ -2,8 +2,8 @@ const WebSocket = require('ws');
 const net = require('net');
 
 // 🔴 CONFIGURATION: PASTE YOUR FALIXNODES ENDPOINT DETAILS HERE
-const FALIX_IP = 'your-falix-ip.falix.gg'; 
-const FALIX_PORT = 25565;                  
+const FALIX_IP = '162.55.100.208'; 
+const FALIX_PORT = 25536;                  
 
 const PORT = process.env.PORT || 8080;     
 
